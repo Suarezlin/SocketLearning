@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="utils.SocketUtilsTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2020-11-14T02:50:58" hostname="DESKTOP-S970PPH" time="0.782">
+  <properties/>
+  <testcase name="testReceive" classname="utils.SocketUtilsTest" time="0.782"/>
+  <system-out><![CDATA[ReceiveMsg{status=true, msg='test'}
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+}
+
+group 'com.linziniu'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    implementation 'org.projectlombok:lombok:1.18.16'
+    implementation 'org.mockito:mockito-core:3.6.0'
+    implementation 'org.apache.commons:commons-lang3:3.11'
+}
+tasks.withType(Javadoc) {
+    options.encoding = "UTF-8"
+}
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
