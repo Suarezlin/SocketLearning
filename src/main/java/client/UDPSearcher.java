@@ -54,7 +54,7 @@ public class UDPSearcher {
 
     private synchronized void stop() {
         if (searcherPool != null) {
-            searcherPool.shutdownNow();
+            searcherPool.shutdown();
         }
         servers.clear();
     }
@@ -63,6 +63,8 @@ public class UDPSearcher {
         ServerInfo result = null;
         if (!servers.isEmpty()) {
             result = servers.get(0);
+        } else {
+            return null;
         }
         stop();
         return result;
@@ -90,7 +92,7 @@ public class UDPSearcher {
             if (socket != null) {
                 socket.close();
             }
-            searcherPool.shutdownNow();
+            searcherPool.shutdown();
         }
 
         @Override
@@ -117,7 +119,7 @@ public class UDPSearcher {
                         System.out.println("消息无效");
                     } else {
                         int tcpPort = SocketUtils.byteArray2Int(buffer, 8);
-                        ServerInfo serverInfo = new ServerInfo(ip, tcpPort);
+                        ServerInfo serverInfo = new ServerInfo(ip.substring(1), tcpPort);
                         servers.add(serverInfo);
                         completeLatch.countDown();
                     }
