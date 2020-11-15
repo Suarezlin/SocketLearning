@@ -12,7 +12,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
-
 public class TCPClient {
 
     private volatile Starter starter;
@@ -94,75 +93,80 @@ public class TCPClient {
                 }
             }
         }
-    }
 
-    private class MessageHandler implements Runnable {
+        private class MessageHandler implements Runnable {
 
-        private final Socket socket;
-        private volatile boolean done = false;
-        private volatile InputStream inputStream;
-        public MessageHandler(Socket socket) {
-            this.socket = socket;
-        }
+            private final Socket socket;
+            private volatile boolean done = false;
+            private volatile InputStream inputStream;
 
-        public void close() {
-            done = true;
-            if (socket != null) {
+            public MessageHandler(Socket socket) {
+                this.socket = socket;
+            }
+
+            public void close() {
+                done = true;
+                if (socket != null) {
+                    try {
+                        socket.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                handlerPool.shutdownNow();
+
+                if (inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void run() {
+                inputStream = System.in;
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                 try {
-                    socket.close();
-                } catch (IOException e) {
+                    while (!done) {
+                        String input = reader.readLine();
+                        if (input == null) {
+                            close();
+                            return;
+                        }
+                        if ("%%%exit000".equals(input)) {
+                            close();
+                            System.out.println("退出");
+                            return;
+                        } else {
+                            SocketUtils.send(socket, input);
+                        }
+                    }
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-//            if (inputStream != null) {
-//                try {
-//                    inputStream.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
         }
 
-        @Override
-        public void run() {
-            inputStream = System.in;
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            try {
-                while (!done) {
-                    String input = reader.readLine();
-                    if (input == null) {
-                        close();
-                        return;
-                    }
-                    if ("%%%exit000".equals(input)) {
-                        close();
-                        System.out.println("退出");
-                        return;
-                    } else {
-                        SocketUtils.send(socket, input);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
+
 
     public static void main(String[] args) throws InterruptedException {
         TCPClient client = new TCPClient(new ServerInfo("127.0.0.1", 4567));
         client.start();
         ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
 
-        while (true) {
-            int numbers = threadGroup.activeCount();
-            Thread[] threads = new Thread[numbers];
-            threadGroup.enumerate(threads);
-            for (int i = 0; i < numbers; i++) {
-                System.out.println("线程号：" + i + " = " + threads[i].getName());
-            }
-            System.out.println();
-            Thread.sleep(1000);
-        }
+//        while (true) {
+//            int numbers = threadGroup.activeCount();
+//            Thread[] threads = new Thread[numbers];
+//            threadGroup.enumerate(threads);
+//            for (int i = 0; i < numbers; i++) {
+//                System.out.println("线程号：" + i + " = " + threads[i].getName());
+//            }
+//            System.out.println();
+//            Thread.sleep(1000);
+//        }
     }
 
 }
