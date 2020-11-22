@@ -1,51 +1,56 @@
 package server.component.handler;
 
+import core.Connector;
 import server.component.notifier.ClientNotifier;
 import utils.SocketUtils;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.channels.SocketChannel;
 
-public class ClientHandler implements Runnable {
+public class ClientHandler {
 
-    private final Socket socket;
+    private final SocketChannel channel;
     private volatile boolean done = false;
     private final ClientNotifier clientNotifier;
+    private final Connector connector;
 
-    public ClientHandler(Socket socket, ClientNotifier clientNotifier) {
-        this.socket = socket;
+    public ClientHandler(SocketChannel channel, ClientNotifier clientNotifier) throws IOException {
+        this.channel = channel;
         this.clientNotifier = clientNotifier;
-        System.out.println("新连接: " + socket.getInetAddress() + ":" + socket.getPort());
+
+        connector = new Connector() {
+            @Override
+            protected void onReceiveNewMessage(String str) {
+                super.onReceiveNewMessage(str);
+                clientNotifier.notifyBroadcast(str);
+            }
+
+            @Override
+            public void onChannelClosed(SocketChannel channel) {
+                super.onChannelClosed(channel);
+                try {
+                    close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        };
+        connector.setup(channel);
+
     }
 
-    public void sendMessage(String msg) {
-        SocketUtils.send(socket, msg);
+    public void send(String msg) {
+
     }
 
     public void close() {
         done = true;
-        if (socket != null) {
-            try {
-                socket.close();
-                System.out.println("断开连接: " + socket.getInetAddress() + ":" + socket.getPort());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        clientNotifier.notifyRemove(this);
-    }
-
-    @Override
-    public void run() {
-        sendMessage("已连接，请发送消息");
-        while (!done) {
-            SocketUtils.ReceiveMsg msg = SocketUtils.receive(socket);
-            if (msg == null || !msg.isStatus()) {
-                close();
-            } else {
-                System.out.println("收到来自 " + socket.getInetAddress() + ":" + socket.getPort() + " 的消息: " + msg.getMsg());
-                clientNotifier.notifyBroadcast(socket.getInetAddress() + ":" + socket.getPort() + ": " + msg.getMsg());
-            }
+        try {
+            connector.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

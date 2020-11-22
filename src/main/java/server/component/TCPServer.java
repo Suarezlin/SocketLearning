@@ -5,6 +5,7 @@ import server.component.notifier.ClientNotifier;
 import server.component.notifier.CloseNotifier;
 import server.component.handler.Server;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -28,9 +29,14 @@ public class TCPServer implements CloseNotifier, ClientNotifier {
 
     public synchronized void start() {
         stop();
-        server = new Server(port, this, this);
+        try {
+            server = new Server(port, this, this);
+        } catch (IOException e) {
+            System.out.println("启动失败: " + e.getMessage());
+            return;
+        }
         acceptorPool = Executors.newSingleThreadExecutor();
-        broadcastPool = Executors.newFixedThreadPool(16);
+//        broadcastPool = Executors.newFixedThreadPool(16);
         acceptorPool.submit(server);
     }
 
@@ -74,9 +80,10 @@ public class TCPServer implements CloseNotifier, ClientNotifier {
 
     @Override
     public void notifyBroadcast(String msg) {
-        broadcastPool.submit(() -> {
-            handlers.forEach(handler -> handler.sendMessage(msg));
-        });
+        System.out.println("广播: " + msg);
+//        broadcastPool.submit(() -> {
+//            handlers.forEach(handler -> handler.sendMessage(msg));
+//        });
 
     }
 }
